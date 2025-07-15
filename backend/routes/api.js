@@ -126,7 +126,9 @@ async function sendEmail(to, subject, text, html) {
             pass: process.env.SMTP_PASS, // set in .env
         },
     });
-    await transporter.sendMail({ from: process.env.SMTP_USER, to, subject, text, html });
+    const senderName = process.env.SMTP_SENDER_NAME || 'Rice Shop';
+    const from = `${senderName} <${process.env.SMTP_USER}>`;
+    await transporter.sendMail({ from, to, subject, text, html });
 }
 
 // GET /api/products - List all products
@@ -377,7 +379,7 @@ router.post('/upload', upload.single('image'), (req, res) => {
 
 // POST /api/products - Create product (admin)
 router.post('/products', upload.single('image'), async (req, res) => {
-    const { name, sku, price, description } = req.body;
+    const { name, sku, price, description, cost } = req.body;
 
     if (!name || !sku || !price) {
         return res.status(400).json({ error: 'Missing required fields' });
@@ -393,6 +395,7 @@ router.post('/products', upload.single('image'), async (req, res) => {
             name,
             sku,
             price,
+            cost, // <-- Add cost field
             description,
             image: imageUrl
         });
@@ -409,7 +412,7 @@ router.post('/products', upload.single('image'), async (req, res) => {
 // PUT /api/products/:id - Update product (admin)
 router.put('/products/:id', upload.single('image'), async (req, res) => {
     const { id } = req.params;
-    const { name, sku, price, description } = req.body;
+    const { name, sku, price, description, cost } = req.body;
 
     const product = await Product.findByPk(id);
     if (!product) {
@@ -429,7 +432,7 @@ router.put('/products/:id', upload.single('image'), async (req, res) => {
     }
 
     try {
-        await product.update({ name, sku, price, description, image: imageUrl });
+        await product.update({ name, sku, price, cost, description, image: imageUrl }); // <-- Add cost field
         res.json(product);
     } catch (error) {
         if (error.name === 'SequelizeUniqueConstraintError') {

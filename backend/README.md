@@ -25,6 +25,7 @@ SMTP_USER=your_gmail@gmail.com
 SMTP_PASS=your_gmail_app_password
 SHOP_OWNER_EMAIL=your_notify_email@gmail.com
 JWT_SECRET=your_super_secret
+SMTP_SENDER_NAME=Rice Shop   # (Optional) Sender name for all outgoing emails
 ```
 
 ### 3. Database Setup
@@ -81,6 +82,7 @@ A full Postman collection is provided: `RiceShop.postman_collection.json`
 ## Email Setup
 - Uses Gmail SMTP by default. Enable "App Passwords" in your Google account.
 - Emails are sent for OTP, order confirmation, and admin notifications.
+- **Sender Name:** You can customize the sender name for all outgoing emails by setting `SMTP_SENDER_NAME` in your `.env` file. If not set, it defaults to `Rice Shop`.
 
 ## License
 MIT 
