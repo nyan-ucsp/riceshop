@@ -16,6 +16,7 @@ function ProductManagement() {
     });
     const [imagePreview, setImagePreview] = useState(null);
     const [imageError, setImageError] = useState({});
+    const [formError, setFormError] = useState(''); // <-- Add error state
 
     useEffect(() => {
         loadProducts();
@@ -73,15 +74,25 @@ function ProductManagement() {
 
     async function handleSubmit(e) {
         e.preventDefault();
+        setFormError(''); // Clear previous error
         try {
             if (editingProduct) {
-                await updateProduct(editingProduct.id, formData);
+                const result = await updateProduct(editingProduct.id, formData);
+                if (result.error) {
+                    setFormError(result.error);
+                    return;
+                }
             } else {
-                await createProduct(formData);
+                const result = await createProduct(formData);
+                if (result.error) {
+                    setFormError(result.error);
+                    return;
+                }
             }
             resetForm();
             loadProducts();
         } catch (error) {
+            setFormError('Error saving product.');
             console.error('Error saving product:', error);
         }
     }
@@ -135,6 +146,34 @@ function ProductManagement() {
         return value ? value.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' MMK' : '0 MMK';
     }
 
+    // Add handlers for price up/down
+    function handlePriceUp() {
+        setFormData(prev => ({
+            ...prev,
+            price: (parseInt(prev.price || '0', 10) + 1000).toString()
+        }));
+    }
+    function handlePriceDown() {
+        setFormData(prev => ({
+            ...prev,
+            price: Math.max(0, parseInt(prev.price || '0', 10) - 1000).toString()
+        }));
+    }
+
+    // Add handlers for cost up/down
+    function handleCostUp() {
+        setFormData(prev => ({
+            ...prev,
+            cost: (parseInt(prev.cost || '0', 10) + 1000).toString()
+        }));
+    }
+    function handleCostDown() {
+        setFormData(prev => ({
+            ...prev,
+            cost: Math.max(0, parseInt(prev.cost || '0', 10) - 1000).toString()
+        }));
+    }
+
     if (loading) {
         return <div>Loading products...</div>;
     }
@@ -160,6 +199,9 @@ function ProductManagement() {
                 {showForm && (
                     <div className="card" style={{ marginBottom: '20px' }}>
                         <h4>{editingProduct ? 'Edit Product' : 'Add New Product'}</h4>
+                        {formError && (
+                            <div style={{ color: 'red', marginBottom: 10 }}>{formError}</div>
+                        )}
                         <form onSubmit={handleSubmit}>
                             <div className="form-group">
                                 <label className="form-label">Product Name</label>
@@ -185,29 +227,39 @@ function ProductManagement() {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Price</label>
-                                <input
-                                    type="number"
-                                    name="price"
-                                    value={formData.price}
-                                    onChange={handleInputChange}
-                                    className="form-input"
-                                    step="0.01"
-                                    min="0"
-                                    required
-                                />
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <input
+                                        type="number"
+                                        name="price"
+                                        value={formData.price}
+                                        onChange={handleInputChange}
+                                        className="form-input"
+                                        step="1"
+                                        min="0"
+                                        required
+                                        style={{ flex: 1 }}
+                                    />
+                                    <button type="button" className="btn btn-light" onClick={handlePriceUp} style={{ padding: '4px 10px' }}>▲</button>
+                                    <button type="button" className="btn btn-light" onClick={handlePriceDown} style={{ padding: '4px 10px' }}>▼</button>
+                                </div>
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Cost</label>
-                                <input
-                                    type="number"
-                                    name="cost"
-                                    value={formData.cost}
-                                    onChange={handleInputChange}
-                                    className="form-input"
-                                    step="0.01"
-                                    min="0"
-                                    required
-                                />
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <input
+                                        type="number"
+                                        name="cost"
+                                        value={formData.cost}
+                                        onChange={handleInputChange}
+                                        className="form-input"
+                                        step="1"
+                                        min="0"
+                                        required
+                                        style={{ flex: 1 }}
+                                    />
+                                    <button type="button" className="btn btn-light" onClick={handleCostUp} style={{ padding: '4px 10px' }}>▲</button>
+                                    <button type="button" className="btn btn-light" onClick={handleCostDown} style={{ padding: '4px 10px' }}>▼</button>
+                                </div>
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Description</label>
