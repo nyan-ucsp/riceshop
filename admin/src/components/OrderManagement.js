@@ -23,6 +23,7 @@ function OrderDetail({ order, products }) {
                 <div style={{ minWidth: 180 }}>
                     <div><b>Status:</b> <span className={order.status === 'delivered' ? 'status-badge delivered' : order.confirmed ? 'status-badge confirmed' : 'status-badge pending'}>{order.status || (order.confirmed ? 'Confirmed' : 'Pending')}</span></div>
                     <div><b>Date:</b> {new Date(order.createdAt).toLocaleString()}</div>
+                    <div><b>Language:</b> {order.language === 'my' ? 'မြန်မာ' : 'English'}</div>
                     <div><b>Total:</b> <span style={{ color: '#2d7a2d', fontWeight: 600 }}>{formatMMK(order.totalPrice)}</span></div>
                     <div><b>Total Profit:</b> <span style={{ color: '#16a085', fontWeight: 600 }}>{formatMMK(order.cart.reduce((sum, item) => sum + ((item.price - (productMap[item.productId]?.cost || 0)) * item.quantity), 0))}</span></div>
                 </div>

@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CartContext } from './App';
 import { confirmOrder, resendOTP } from './api';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +12,7 @@ function OTPConfirmation() {
     const [resendTimer, setResendTimer] = useState(60); // Start with 60 seconds
     const [resendLoading, setResendLoading] = useState(false);
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     useEffect(() => {
         let interval;
@@ -23,7 +25,7 @@ function OTPConfirmation() {
     }, [resendTimer]);
 
     if (!orderInfo) {
-        return <div>No order to confirm.</div>;
+        return <div>{t('messages.noOrderToConfirm')}</div>;
     }
 
     async function handleSubmit(e) {
@@ -35,7 +37,7 @@ function OTPConfirmation() {
             setOrderInfo(null);
             navigate('/success');
         } else {
-            setError(res.error || 'Failed to confirm order.');
+            setError(res.error || t('messages.confirmOrderFailed'));
         }
     }
 
@@ -50,10 +52,10 @@ function OTPConfirmation() {
                 setError('');
                 setResendTimer(60);
             } else {
-                setError(data.error || 'Failed to resend OTP.');
+                setError(data.error || t('messages.resendOTPFailed'));
             }
         } catch (err) {
-            setError('Failed to resend OTP. Please try again.');
+            setError(t('messages.resendOTPError'));
         }
         setResendLoading(false);
     }
@@ -61,10 +63,10 @@ function OTPConfirmation() {
     return (
         <div style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ maxWidth: 400, width: '100%', background: '#fff', borderRadius: 12, boxShadow: '0 2px 12px #0001', padding: 32 }}>
-                <h2 style={{ color: '#2d7a2d', textAlign: 'center', marginBottom: 24 }}>Enter OTP</h2>
+                <h2 style={{ color: '#2d7a2d', textAlign: 'center', marginBottom: 24 }}>{t('otp.title')}</h2>
                 <form onSubmit={handleSubmit}>
                     <div style={{ marginBottom: 20 }}>
-                        <label style={{ fontWeight: 500, color: '#333' }}>OTP Code:<br />
+                        <label style={{ fontWeight: 500, color: '#333' }}>{t('otp.otpCode')}:<br />
                             <input value={code} onChange={e => setCode(e.target.value)} required style={{
                                 width: '100%',
                                 fontSize: 24,
@@ -92,7 +94,7 @@ function OTPConfirmation() {
                         cursor: loading ? 'not-allowed' : 'pointer',
                         boxShadow: '0 2px 8px #0001',
                         marginTop: 8
-                    }}>{loading ? 'Verifying...' : 'Confirm Order'}</button>
+                    }}>{loading ? t('messages.verifying') : t('otp.verifyOtp')}</button>
                 </form>
 
                 <div style={{ marginTop: 24, textAlign: 'center' }}>
@@ -112,8 +114,8 @@ function OTPConfirmation() {
                             transition: 'all 0.3s ease'
                         }}
                     >
-                        {resendLoading ? 'Sending...' :
-                            resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Send OTP Again'}
+                        {resendLoading ? t('messages.sending') :
+                            resendTimer > 0 ? `${t('otp.resendOtp')} ${resendTimer}s` : t('otp.resendOtp')}
                     </button>
                 </div>
             </div>

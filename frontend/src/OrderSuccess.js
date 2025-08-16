@@ -1,12 +1,15 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 function OrderSuccess() {
+    const { t } = useTranslation();
+    
     return (
         <div style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ maxWidth: 400, width: '100%', background: '#fff', borderRadius: 12, boxShadow: '0 2px 12px #0001', padding: 32, textAlign: 'center' }}>
                 <div style={{ fontSize: 56, color: '#2d7a2d', marginBottom: 16 }}>✔️</div>
-                <h2 style={{ color: '#2d7a2d', marginBottom: 12 }}>Order Confirmed!</h2>
-                <p style={{ color: '#333', fontSize: 18, marginBottom: 24 }}>Thank you for your order. Please check your email for confirmation.</p>
+                <h2 style={{ color: '#2d7a2d', marginBottom: 12 }}>{t('order.orderSuccess')}</h2>
+                <p style={{ color: '#333', fontSize: 18, marginBottom: 24 }}>{t('messages.orderPlaced')}</p>
                 <a href="/" style={{
                     display: 'inline-block',
                     background: '#2d7a2d',
@@ -17,7 +20,7 @@ function OrderSuccess() {
                     textDecoration: 'none',
                     fontSize: 16,
                     boxShadow: '0 2px 8px #0001'
-                }}>Back to Shop</a>
+                }}>{t('navigation.home')}</a>
             </div>
         </div>
     );

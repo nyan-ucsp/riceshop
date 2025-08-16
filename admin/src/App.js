@@ -1,11 +1,14 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Dashboard from './components/Dashboard';
 import ProductManagement from './components/ProductManagement';
 import OrderManagement from './components/OrderManagement';
 import Analytics from './components/Analytics';
 import AdminManagement from './components/AdminManagement';
+import LanguageSwitcher from './components/LanguageSwitcher';
 import { adminLogin, adminLogout, adminChangePassword } from './api';
+import './i18n';
 
 const AuthContext = createContext();
 
@@ -74,11 +77,16 @@ function Sidebar() {
     const location = useLocation();
     const { username, logout } = useAuth();
     const [showChangePw, setShowChangePw] = useState(false);
+    const { t } = useTranslation();
+    
     return (
         <div className="sidebar">
             <div className="sidebar-header">
-                <h2>Rice Shop Admin</h2>
+                <h2>{t('dashboard.title')}</h2>
                 <div style={{ fontSize: 14, marginTop: 8, color: '#bdc3c7' }}>👤 {username}</div>
+                <div style={{ marginTop: 10 }}>
+                    <LanguageSwitcher />
+                </div>
             </div>
             <ul className="nav-menu">
                 <li className="nav-item">
@@ -86,7 +94,7 @@ function Sidebar() {
                         to="/"
                         className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
                     >
-                        📊 Dashboard
+                        📊 {t('common.dashboard')}
                     </Link>
                 </li>
                 <li className="nav-item">
@@ -94,7 +102,7 @@ function Sidebar() {
                         to="/products"
                         className={`nav-link ${location.pathname === '/products' ? 'active' : ''}`}
                     >
-                        📦 Product Management
+                        📦 {t('productManagement.title')}
                     </Link>
                 </li>
                 <li className="nav-item">
@@ -102,7 +110,7 @@ function Sidebar() {
                         to="/orders"
                         className={`nav-link ${location.pathname === '/orders' ? 'active' : ''}`}
                     >
-                        📋 Order Management
+                        📋 {t('orderManagement.title')}
                     </Link>
                 </li>
                 <li className="nav-item">
@@ -110,7 +118,7 @@ function Sidebar() {
                         to="/analytics"
                         className={`nav-link ${location.pathname === '/analytics' ? 'active' : ''}`}
                     >
-                        📈 Analytics
+                        📈 {t('common.analytics')}
                     </Link>
                 </li>
                 <li className="nav-item">
@@ -118,16 +126,16 @@ function Sidebar() {
                         to="/admin-users"
                         className={`nav-link ${location.pathname === '/admin-users' ? 'active' : ''}`}
                     >
-                        👥 Admin Management
+                        👥 {t('common.adminUsers')}
                     </Link>
                 </li>
             </ul>
             <div style={{ marginTop: 40, padding: '0 20px' }}>
                 <button className="btn btn-primary" style={{ width: '100%', marginBottom: 10 }} onClick={() => setShowChangePw(true)}>
-                    Change Password
+                    {t('auth.changePassword')}
                 </button>
                 <button className="btn btn-danger" style={{ width: '100%' }} onClick={logout}>
-                    Logout
+                    {t('common.logout')}
                 </button>
             </div>
             {showChangePw && <ChangePasswordModal onClose={() => setShowChangePw(false)} />}
@@ -140,6 +148,8 @@ function ChangePasswordModal({ onClose }) {
     const [oldPassword, setOldPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [success, setSuccess] = useState(false);
+    const { t } = useTranslation();
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -152,21 +162,21 @@ function ChangePasswordModal({ onClose }) {
     return (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: '#0008', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div className="card" style={{ minWidth: 320, maxWidth: 400 }}>
-                <h3>Change Password</h3>
+                <h3>{t('auth.changePassword')}</h3>
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label className="form-label">Old Password</label>
+                        <label className="form-label">{t('auth.oldPassword')}</label>
                         <input type="password" className="form-input" value={oldPassword} onChange={e => setOldPassword(e.target.value)} required />
                     </div>
                     <div className="form-group">
-                        <label className="form-label">New Password</label>
+                        <label className="form-label">{t('auth.newPassword')}</label>
                         <input type="password" className="form-input" value={newPassword} onChange={e => setNewPassword(e.target.value)} required />
                     </div>
                     {error && <div style={{ color: 'red', marginBottom: 10 }}>{error}</div>}
-                    {success && <div style={{ color: 'green', marginBottom: 10 }}>Password changed!</div>}
+                    {success && <div style={{ color: 'green', marginBottom: 10 }}>{t('auth.passwordChanged')}</div>}
                     <div style={{ display: 'flex', gap: 10 }}>
-                        <button type="submit" className="btn btn-success" disabled={loading}>Change</button>
-                        <button type="button" className="btn btn-danger" onClick={onClose}>Cancel</button>
+                        <button type="submit" className="btn btn-success" disabled={loading}>{t('common.update')}</button>
+                        <button type="button" className="btn btn-danger" onClick={onClose}>{t('common.cancel')}</button>
                     </div>
                 </form>
             </div>
@@ -179,6 +189,8 @@ function LoginPage() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [redirect, setRedirect] = useState(false);
+    const { t } = useTranslation();
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -189,19 +201,24 @@ function LoginPage() {
     return (
         <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5' }}>
             <div className="card" style={{ minWidth: 320, maxWidth: 400 }}>
-                <h2 style={{ textAlign: 'center', marginBottom: 20 }}>Admin Login</h2>
+                <div style={{ textAlign: 'center', marginBottom: 20 }}>
+                    <h2>{t('auth.adminLogin')}</h2>
+                    <div style={{ marginTop: 10 }}>
+                        <LanguageSwitcher />
+                    </div>
+                </div>
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label className="form-label">Username</label>
+                        <label className="form-label">{t('common.username')}</label>
                         <input type="text" className="form-input" value={username} onChange={e => setUsername(e.target.value)} required autoFocus />
                     </div>
                     <div className="form-group">
-                        <label className="form-label">Password</label>
+                        <label className="form-label">{t('common.password')}</label>
                         <input type="password" className="form-input" value={password} onChange={e => setPassword(e.target.value)} required />
                     </div>
                     {error && <div style={{ color: 'red', marginBottom: 10 }}>{error}</div>}
                     <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
-                        {loading ? 'Logging in...' : 'Login'}
+                        {loading ? t('auth.loggingIn') : t('common.login')}
                     </button>
                 </form>
             </div>

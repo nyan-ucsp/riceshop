@@ -1,4 +1,5 @@
 import React, { useContext, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CartContext } from './App';
 import { createOrder } from './api';
 import { useNavigate } from 'react-router-dom';
@@ -9,36 +10,43 @@ function Checkout() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const { t, i18n } = useTranslation();
 
     async function handleSubmit(e) {
         e.preventDefault();
         if (!form.name || !form.email || !form.address) {
-            setError('All fields are required.');
+            setError(t('messages.allFieldsRequired'));
             return;
         }
         if (cart.length === 0) {
-            setError('Your cart is empty.');
+            setError(t('cart.emptyCart'));
             return;
         }
         setLoading(true);
-        const res = await createOrder({ ...form, cart });
+        // Use current website language for email communications
+        const orderData = { 
+            ...form, 
+            cart, 
+            language: i18n.language 
+        };
+        const res = await createOrder(orderData);
         setLoading(false);
         if (res.orderId) {
             setOrderInfo({ orderId: res.orderId, email: form.email });
             setCart([]);
             navigate('/otp');
         } else {
-            setError(res.error || 'Failed to place order.');
+            setError(res.error || t('messages.orderFailed'));
         }
     }
 
     return (
         <div style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ maxWidth: 500, width: '100%', background: '#fff', borderRadius: 12, boxShadow: '0 2px 12px #0001', padding: 36 }}>
-                <h2 style={{ textAlign: 'center', color: '#2d7a2d', marginBottom: 32 }}>Checkout</h2>
+                <h2 style={{ textAlign: 'center', color: '#2d7a2d', marginBottom: 32 }}>{t('common.checkout')}</h2>
                 <form onSubmit={handleSubmit}>
                     <div style={{ marginBottom: 22 }}>
-                        <label style={{ fontWeight: 500, color: '#333' }}>Name:<br />
+                        <label style={{ fontWeight: 500, color: '#333' }}>{t('checkout.firstName')}:<br />
                             <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required style={{
                                 width: '100%',
                                 fontSize: 18,
@@ -52,7 +60,7 @@ function Checkout() {
                         </label>
                     </div>
                     <div style={{ marginBottom: 22 }}>
-                        <label style={{ fontWeight: 500, color: '#333' }}>Email:<br />
+                        <label style={{ fontWeight: 500, color: '#333' }}>{t('checkout.email')}:<br />
                             <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required style={{
                                 width: '100%',
                                 fontSize: 18,
@@ -66,7 +74,7 @@ function Checkout() {
                         </label>
                     </div>
                     <div style={{ marginBottom: 22 }}>
-                        <label style={{ fontWeight: 500, color: '#333' }}>Address:<br />
+                        <label style={{ fontWeight: 500, color: '#333' }}>{t('checkout.address')}:<br />
                             <textarea value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} required style={{
                                 width: '100%',
                                 fontSize: 18,
@@ -94,7 +102,7 @@ function Checkout() {
                         cursor: loading ? 'not-allowed' : 'pointer',
                         boxShadow: '0 2px 8px #0001',
                         marginTop: 8
-                    }}>{loading ? 'Placing Order...' : 'Place Order'}</button>
+                    }}>{loading ? t('messages.placingOrder') : t('checkout.placeOrder')}</button>
                 </form>
             </div>
         </div>

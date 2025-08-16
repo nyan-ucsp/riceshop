@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getAnalytics, getOrders, getProducts } from '../api';
 
 function Dashboard() {
@@ -10,6 +11,7 @@ function Dashboard() {
     });
     const [recentOrders, setRecentOrders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { t } = useTranslation();
 
     useEffect(() => {
         loadDashboardData();
@@ -47,28 +49,28 @@ function Dashboard() {
     }
 
     if (loading) {
-        return <div>Loading dashboard...</div>;
+        return <div>{t('common.loading')}</div>;
     }
 
     return (
         <div>
             <div className="page-header">
-                <h1 className="page-title">Dashboard</h1>
+                <h1 className="page-title">{t('common.dashboard')}</h1>
                 <p className="page-subtitle">Overview of your rice shop business</p>
             </div>
 
             <div className="stats-grid">
                 <div className="stat-card">
                     <div className="stat-number">{stats.totalProducts}</div>
-                    <div className="stat-label">Total Products</div>
+                    <div className="stat-label">{t('dashboard.totalProducts')}</div>
                 </div>
                 <div className="stat-card">
                     <div className="stat-number">{stats.totalOrders}</div>
-                    <div className="stat-label">Total Orders</div>
+                    <div className="stat-label">{t('dashboard.totalOrders')}</div>
                 </div>
                 <div className="stat-card">
                     <div className="stat-number">{formatMMK(stats.totalRevenue)}</div>
-                    <div className="stat-label">Total Revenue</div>
+                    <div className="stat-label">{t('dashboard.totalRevenue')}</div>
                 </div>
                 <div className="stat-card">
                     <div className="stat-number">{stats.pendingOrders}</div>
@@ -77,15 +79,15 @@ function Dashboard() {
             </div>
 
             <div className="card">
-                <h3>Recent Orders</h3>
+                <h3>{t('dashboard.recentOrders')}</h3>
                 <table className="table">
                     <thead>
                         <tr>
-                            <th>Order ID</th>
-                            <th>Customer</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Date</th>
+                            <th>{t('orderManagement.orderNumber')}</th>
+                            <th>{t('orderManagement.customerName')}</th>
+                            <th>{t('orderManagement.orderTotal')}</th>
+                            <th>{t('orderManagement.orderStatus')}</th>
+                            <th>{t('orderManagement.orderDate')}</th>
                         </tr>
                     </thead>
                     <tbody>

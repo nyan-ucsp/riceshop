@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CartContext } from './App';
 import { getProducts } from './api';
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +10,7 @@ function ProductList() {
     const [imageErrors, setImageErrors] = useState({});
     const { cart, setCart } = useContext(CartContext);
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     useEffect(() => {
         getProducts().then(setProducts);
@@ -54,7 +56,7 @@ function ProductList() {
 
     return (
         <div className="product-list-container">
-            <h2 style={{ textAlign: 'center', color: '#2d7a2d', marginBottom: 32 }}>Rice Products</h2>
+            <h2 style={{ textAlign: 'center', color: '#2d7a2d', marginBottom: 32 }}>{t('common.products')}</h2>
             <div className="product-grid">
                 {products.map(product => (
                     <div key={product.id} className="product-grid-item">
@@ -73,13 +75,13 @@ function ProductList() {
                                 className="view-details-btn"
                                 onClick={() => viewDetails(product)}
                             >
-                                View Details
+                                {t('product.description')}
                             </button>
                             <button
                                 className="add-to-cart-btn"
                                 onClick={() => addToCart(product)}
                             >
-                                Add to Cart
+                                {t('common.addToCart')}
                             </button>
                         </div>
                     </div>

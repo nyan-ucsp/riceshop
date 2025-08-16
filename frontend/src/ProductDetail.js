@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CartContext } from './App';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getProducts } from './api';
@@ -11,6 +12,7 @@ function ProductDetail() {
     const [product, setProduct] = useState(location.state?.product || null);
     const [quantity, setQuantity] = useState(1);
     const [imageError, setImageError] = useState(false);
+    const { t } = useTranslation();
 
     useEffect(() => {
         if (!product) {
@@ -68,7 +70,7 @@ function ProductDetail() {
     }
 
     if (!product) {
-        return <div>Loading...</div>;
+        return <div>{t('common.loading')}</div>;
     }
 
     return (
@@ -98,7 +100,7 @@ function ProductDetail() {
                         fontSize: 14
                     }}
                 >
-                    ← Back to Products
+                    ← {t('navigation.products')}
                 </button>
 
                 <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
@@ -164,7 +166,7 @@ function ProductDetail() {
                                 fontWeight: 500,
                                 color: '#333'
                             }}>
-                                Quantity:
+                                {t('common.quantity')}:
                             </label>
                             <input
                                 type="number"
@@ -199,7 +201,7 @@ function ProductDetail() {
                                 marginBottom: 16
                             }}
                         >
-                            Add to Cart ({formatMMK(product.price * quantity)})
+                            {t('common.addToCart')} ({formatMMK(product.price * quantity)})
                         </button>
 
                         {/* Back to Cart Button */}
@@ -217,7 +219,7 @@ function ProductDetail() {
                                 cursor: 'pointer'
                             }}
                         >
-                            View Cart
+                            {t('common.cart')}
                         </button>
                     </div>
                 </div>
