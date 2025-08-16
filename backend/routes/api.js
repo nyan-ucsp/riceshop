@@ -3,13 +3,14 @@ const router = express.Router();
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 const Otp = require('../models/Otp');
-const nodemailer = require('nodemailer');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const AdminUser = require('../models/AdminUser');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const emailService = require('../services/emailService');
+const UserPreference = require('../models/UserPreference');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
@@ -99,11 +100,6 @@ const upload = multer({
     }
 });
 
-// Helper: Generate random 6-digit OTP
-function generateOtp() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
 // Helper: Generate purchase order number
 function generatePurchaseOrderNumber() {
     const date = new Date();
@@ -114,23 +110,6 @@ function generatePurchaseOrderNumber() {
     return `PO-${year}${month}${day}-${random}`;
 }
 
-// Helper: Send email
-async function sendEmail(to, subject, text, html) {
-    // Configure your SMTP settings here
-    let transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com', // or your SMTP
-        port: 465,
-        secure: true, // Use SSL
-        auth: {
-            user: process.env.SMTP_USER, // set in .env
-            pass: process.env.SMTP_PASS, // set in .env
-        },
-    });
-    const senderName = process.env.SMTP_SENDER_NAME || 'Rice Shop';
-    const from = `${senderName} <${process.env.SMTP_USER}>`;
-    await transporter.sendMail({ from, to, subject, text, html });
-}
-
 // GET /api/products - List all products
 router.get('/products', async (req, res) => {
     const products = await Product.findAll();
@@ -139,7 +118,7 @@ router.get('/products', async (req, res) => {
 
 // POST /api/orders - Create order, send OTP
 router.post('/orders', async (req, res) => {
-    const { name, email, address, cart } = req.body;
+    const { name, email, address, cart, language } = req.body;
     if (!name || !email || !address || !cart) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -164,26 +143,17 @@ router.post('/orders', async (req, res) => {
         cart,
         totalPrice,
         purchaseOrderNumber,
-        confirmed: false
+        confirmed: false,
+        language: language || 'en' // Default to English if not specified
     });
 
     // Generate OTP
-    const code = generateOtp();
+    const code = emailService.generateOtp();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min expiry
     await Otp.create({ email, code, expiresAt });
 
-    // Send OTP email (HTML)
-    const otpHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; padding: 24px; background: #fafcff;">
-            <h2 style="color: #2d7a2d;">Rice Shop OTP</h2>
-            <p>Dear Customer,</p>
-            <p>Your One-Time Password (OTP) is:</p>
-            <div style="font-size: 2em; font-weight: bold; letter-spacing: 6px; color: #2d7a2d; margin: 16px 0;">${code}</div>
-            <p>This code is valid for 10 minutes. Please do not share it with anyone.</p>
-            <p style="margin-top: 32px; color: #888; font-size: 0.9em;">Rice Shop Team</p>
-        </div>
-    `;
-    await sendEmail(email, 'Your Rice Shop OTP', `Your OTP is: ${code}`, otpHtml);
+    // Send OTP email with language support
+    await emailService.sendOtpEmail(email, code, false, req);
     res.json({ orderId: order.id, message: 'OTP sent to email' });
 });
 
@@ -209,97 +179,15 @@ router.post('/orders/confirm', async (req, res) => {
     // Delete OTP
     await otp.destroy();
 
-    // Generate order details for customer email
-    let orderDetailsHtml = '';
-    for (const item of order.cart) {
-        const product = await Product.findByPk(item.productId);
-        if (product) {
-            const itemTotal = product.price * item.quantity;
-            orderDetailsHtml += `<tr><td style='padding:8px 12px;border-bottom:1px solid #eee;'>${product.name} (SKU: ${product.sku})</td><td style='padding:8px 12px;border-bottom:1px solid #eee;text-align:center;'>${item.quantity}</td><td style='padding:8px 12px;border-bottom:1px solid #eee;text-align:right;'>${formatMMK(itemTotal)}</td></tr>`;
-        }
-    }
+    // Generate order details for customer email with stored language
+    const orderDetailsHtml = await emailService.generateOrderDetailsHtml(order, order.language);
 
-    // Send confirmation email to customer (HTML) with order details
-    const confirmationHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; padding: 24px; background: #f6fff6;">
-            <h2 style="color: #2d7a2d;">Order Confirmed!</h2>
-            <p>Thank you <b>${order.name}</b>, your rice order is confirmed!</p>
-            <div style="margin: 20px 0;">
-                <b>Order Number:</b> ${order.purchaseOrderNumber}<br/>
-                <b>Total Amount:</b> ${formatMMK(order.totalPrice)}
-            </div>
-            <table style="width:100%; border-collapse:collapse; margin: 20px 0;">
-                <thead>
-                    <tr style="background:#f8fafc; color:#2d7a2d;">
-                        <th style="padding:10px 12px; text-align:left; border-bottom:2px solid #2d7a2d;">Product</th>
-                        <th style="padding:10px 12px; text-align:center; border-bottom:2px solid #2d7a2d;">Qty</th>
-                        <th style="padding:10px 12px; text-align:right; border-bottom:2px solid #2d7a2d;">Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${orderDetailsHtml}
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="2" style="padding:10px 12px; text-align:right; font-weight:bold; color:#2d7a2d;">Total:</td>
-                        <td style="padding:10px 12px; text-align:right; font-weight:bold; color:#2d7a2d;">${formatMMK(order.totalPrice)}</td>
-                    </tr>
-                </tfoot>
-            </table>
-            <p>We appreciate your business. You will receive another email when your order is shipped.</p>
-            <p style="margin-top: 32px; color: #888; font-size: 0.9em;">Rice Shop Team</p>
-        </div>
-    `;
-    await sendEmail(email, 'Order Confirmed', `Thank you ${order.name}, your rice order is confirmed!`, confirmationHtml);
+    // Send confirmation email to customer with stored language
+    await emailService.sendOrderConfirmationEmail(order, orderDetailsHtml, req);
 
     // Send notification email to shop owner
-    const shopOwnerEmail = process.env.SHOP_OWNER_EMAIL;
-    if (shopOwnerEmail) {
-        // Calculate total price
-        let total = 0;
-        let details = '';
-        let detailsHtml = '';
-        for (const item of order.cart) {
-            // item: { productId, quantity }
-            const product = await Product.findByPk(item.productId);
-            if (product) {
-                const itemTotal = product.price * item.quantity;
-                total += itemTotal;
-                details += `- ${product.name} x ${item.quantity} = ${formatMMK(itemTotal)}\n`;
-                detailsHtml += `<tr><td style='padding:8px 12px;border-bottom:1px solid #eee;'>${product.name}</td><td style='padding:8px 12px;border-bottom:1px solid #eee;text-align:center;'>${item.quantity}</td><td style='padding:8px 12px;border-bottom:1px solid #eee;text-align:right;'>${formatMMK(itemTotal)}</td></tr>`;
-            }
-        }
-        const ownerMsg = `New order from ${order.name} (${order.email})\nAddress: ${order.address}\n\nOrder details:\n${details}\nTotal: ${formatMMK(total)}`;
-        const ownerHtml = `
-            <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; border: 1px solid #eee; border-radius: 10px; padding: 32px; background: #fffef8;">
-                <h2 style="color: #2d7a2d; margin-bottom: 18px;">New Rice Order Received</h2>
-                <div style="margin-bottom: 18px;">
-                    <b>Customer:</b> ${order.name} (<a href="mailto:${order.email}">${order.email}</a>)<br/>
-                    <b>Address:</b> ${order.address}
-                </div>
-                <table style="width:100%; border-collapse:collapse; margin-bottom: 18px;">
-                    <thead>
-                        <tr style="background:#f8fafc; color:#2d7a2d;">
-                            <th style="padding:10px 12px; text-align:left; border-bottom:2px solid #2d7a2d;">Product</th>
-                            <th style="padding:10px 12px; text-align:center; border-bottom:2px solid #2d7a2d;">Qty</th>
-                            <th style="padding:10px 12px; text-align:right; border-bottom:2px solid #2d7a2d;">Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${detailsHtml}
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="2" style="padding:10px 12px; text-align:right; font-weight:bold; color:#2d7a2d;">Total:</td>
-                            <td style="padding:10px 12px; text-align:right; font-weight:bold; color:#2d7a2d;">${formatMMK(total)}</td>
-                        </tr>
-                    </tfoot>
-                </table>
-                <div style="color:#888; font-size:0.95em;">Order placed via Rice Shop</div>
-            </div>
-        `;
-        await sendEmail(shopOwnerEmail, 'New Rice Order Received', ownerMsg, ownerHtml);
-    }
+    const total = order.totalPrice;
+    await emailService.sendAdminNotificationEmail(order, orderDetailsHtml, total);
 
     res.json({ message: 'Order confirmed and email sent' });
 });
@@ -321,22 +209,12 @@ router.post('/orders/resend-otp', async (req, res) => {
     await Otp.destroy({ where: { email } });
 
     // Generate new OTP
-    const code = generateOtp();
+    const code = emailService.generateOtp();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min expiry
     await Otp.create({ email, code, expiresAt });
 
-    // Send new OTP email (HTML)
-    const otpHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; padding: 24px; background: #fafcff;">
-            <h2 style="color: #2d7a2d;">Rice Shop OTP (Resent)</h2>
-            <p>Dear Customer,</p>
-            <p>Your new One-Time Password (OTP) is:</p>
-            <div style="font-size: 2em; font-weight: bold; letter-spacing: 6px; color: #2d7a2d; margin: 16px 0;">${code}</div>
-            <p>This code is valid for 10 minutes. Please do not share it with anyone.</p>
-            <p style="margin-top: 32px; color: #888; font-size: 0.9em;">Rice Shop Team</p>
-        </div>
-    `;
-    await sendEmail(email, 'Your Rice Shop OTP (Resent)', `Your new OTP is: ${code}`, otpHtml);
+    // Send new OTP email with language support
+    await emailService.sendOtpEmail(email, code, true, req);
 
     res.json({ message: 'OTP resent successfully' });
 });
@@ -357,8 +235,20 @@ router.put('/orders/:id/status', async (req, res) => {
         return res.status(404).json({ error: 'Order not found' });
     }
 
+    const previousStatus = order.status;
     order.status = status;
     await order.save();
+
+    // Send delivery notification email when status changes to 'delivered'
+    if (status === 'delivered' && previousStatus !== 'delivered' && order.confirmed) {
+        try {
+            const orderDetailsHtml = await emailService.generateOrderDetailsHtml(order, order.language);
+            await emailService.sendDeliveryNotificationEmail(order, orderDetailsHtml);
+        } catch (error) {
+            console.error('Error sending delivery notification email:', error);
+            // Don't fail the request if email fails
+        }
+    }
 
     res.json({ message: 'Order status updated', order });
 });
@@ -597,5 +487,80 @@ router.use('/admin/users', requireAdminAuth); // Add this line to protect admin 
 function formatMMK(amount) {
     return amount.toLocaleString('en-US') + ' MMK';
 }
+
+// --- Language Preference Endpoints ---
+// POST /api/preferences/language - Set user language preference
+router.post('/preferences/language', async (req, res) => {
+    const { email, language } = req.body;
+    
+    if (!email || !language) {
+        return res.status(400).json({ error: 'Email and language are required' });
+    }
+    
+    if (!['en', 'my'].includes(language)) {
+        return res.status(400).json({ error: 'Invalid language. Supported: en, my' });
+    }
+    
+    try {
+        const [preference, created] = await UserPreference.findOrCreate({
+            where: { email },
+            defaults: { language }
+        });
+        
+        if (!created) {
+            preference.language = language;
+            await preference.save();
+        }
+        
+        res.json({ 
+            message: 'Language preference updated successfully',
+            email: preference.email,
+            language: preference.language
+        });
+    } catch (error) {
+        console.error('Error updating language preference:', error);
+        res.status(500).json({ error: 'Failed to update language preference' });
+    }
+});
+
+// GET /api/preferences/language/:email - Get user language preference
+router.get('/preferences/language/:email', async (req, res) => {
+    const { email } = req.params;
+    
+    try {
+        const preference = await UserPreference.findOne({ where: { email } });
+        
+        if (preference) {
+            res.json({ 
+                email: preference.email,
+                language: preference.language
+            });
+        } else {
+            res.json({ 
+                email,
+                language: 'en' // default language
+            });
+        }
+    } catch (error) {
+        console.error('Error getting language preference:', error);
+        res.status(500).json({ error: 'Failed to get language preference' });
+    }
+});
+
+// GET /api/test/language-detection - Test language detection
+router.get('/test/language-detection', async (req, res) => {
+    try {
+        const detectedLanguage = emailService.detectLanguageFromHeaders(req);
+        res.json({ 
+            message: 'Language detection test',
+            detectedLanguage,
+            headers: req.headers,
+            userLanguage: req.headers['x-user-language']
+        });
+    } catch (error) {
+        console.error('Error in language detection test:', error);
+        res.status(500).json({ error: 'Failed to test language detection' });
+    }
+});
 
 module.exports = router; 

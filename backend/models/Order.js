@@ -10,6 +10,7 @@ const Order = sequelize.define('Order', {
     purchaseOrderNumber: { type: DataTypes.STRING, allowNull: false, unique: true },
     confirmed: { type: DataTypes.BOOLEAN, defaultValue: false },
     status: { type: DataTypes.STRING, defaultValue: 'pending' }, // pending, confirmed, delivered
+    language: { type: DataTypes.STRING, defaultValue: 'en' }, // en, my - user's preferred language
 });
 
 module.exports = Order; 
