@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rice Shop Project - Flowchart Diagram</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .diagram {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        .diagram-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #555;
+            font-size: 18px;
+        }
+        .mermaid {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍚 Rice Shop Project - System Flowchart</h1>
+        
+        <div class="diagram">
+            <div class="diagram-title">1. Overall System Architecture</div>
+            <div class="mermaid">
+                graph TB
+                    subgraph "Frontend (React)"
+                        A[User Interface] --> B[Product List]
+                        A --> C[Product Detail]
+                        A --> D[Shopping Cart]
+                        A --> E[Checkout]
+                        A --> F[OTP Confirmation]
+                        A --> G[Order Success]
+                        A --> H[Language Switcher]
+                    end
+                    
+                    subgraph "Admin Panel (React)"
+                        I[Admin Login] --> J[Dashboard]
+                        J --> K[Product Management]
+                        J --> L[Order Management]
+                        J --> M[Analytics]
+                        J --> N[Admin Management]
+                        J --> O[Language Switcher]
+                    end
+                    
+                    subgraph "Backend (Node.js/Express)"
+                        P[API Routes] --> Q[Product APIs]
+                        P --> R[Order APIs]
+                        P --> S[Preferences & Language APIs]
+                        P --> T[Admin APIs]
+                        P --> U[Email Service]
+                        P --> X[Uploads / Static]
+                    end
+                    
+                    subgraph "Database (Sequelize)"
+                        V[Product Model]
+                        W[Order Model]
+                        Z[OTP Model]
+                        Y[AdminUser Model]
+                        AA[UserPreference Model]
+                    end
+                    
+                    A --> P
+                    I --> P
+                    P --> V
+                    P --> W
+                    P --> Z
+                    P --> Y
+                    P --> AA
+            </div>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram-title">2. User Shopping Flow</div>
+            <div class="mermaid">
+                flowchart TD
+                    Start([User visits site]) --> Lang{Language Selection}
+                    Lang -->|English| EN[English Interface]
+                    Lang -->|Myanmar| MY[Myanmar Interface]
+                    
+                    EN --> Browse[Browse Products]
+                    MY --> Browse
+                    
+                    Browse --> ProductList[View Product List]
+                    ProductList --> ProductDetail[View Product Details]
+                    ProductDetail --> AddToCart{Add to Cart?}
+                    
+                    AddToCart -->|Yes| Cart[Add to Shopping Cart]
+                    AddToCart -->|No| ProductDetail
+                    
+                    Cart --> CartView[View Cart Contents]
+                    CartView --> Checkout[Proceed to Checkout]
+                    
+                    Checkout --> OrderForm[Fill Order Form]
+                    OrderForm --> Email[Enter Email]
+                    Email --> OTP[Send OTP to Email]
+                    
+                    OTP --> OTPInput[Enter OTP Code]
+                    OTPInput --> OTPVerify{OTP Valid?}
+                    
+                    OTPVerify -->|Yes| OrderCreate[Confirm Order]
+                    OTPVerify -->|No| OTPInput
+                    
+                    OrderCreate --> OrderSuccess[Order Confirmation]
+                    OrderSuccess --> End([Order Complete])
+            </div>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram-title">3. Admin Management Flow</div>
+            <div class="mermaid">
+                flowchart TD
+                    AdminStart([Admin Access]) --> Login[Admin Login]
+                    Login --> Auth{Authentication}
+                    
+                    Auth -->|Success| Dashboard[Admin Dashboard]
+                    Auth -->|Failed| Login
+                    
+                    Dashboard --> Menu{Select Function}
+                    
+                    Menu -->|Products| ProductMgmt[Product Management]
+                    Menu -->|Orders| OrderMgmt[Order Management]
+                    Menu -->|Analytics| Analytics[Analytics Dashboard]
+                    Menu -->|Admins| AdminMgmt[Admin Management]
+                    
+                    ProductMgmt --> ProductOps{Product Operations}
+                    ProductOps -->|Add| AddProduct[Add New Product]
+                    ProductOps -->|Edit| EditProduct[Edit Product]
+                    ProductOps -->|Delete| DeleteProduct[Delete Product]
+                    ProductOps -->|Upload| UploadImage[Upload Product Image]
+                    
+                    OrderMgmt --> OrderOps{Order Operations}
+                    OrderOps -->|View| ViewOrders[View All Orders]
+                    OrderOps -->|Update| UpdateStatus[Update Order Status]
+                    OrderOps -->|Process| ProcessOrder[Process Order]
+                    
+                    Analytics --> Reports[Generate Reports]
+                    Reports --> SalesData[Sales Data]
+                    Reports --> ProductStats[Product Statistics]
+                    Reports --> OrderTrends[Order Trends]
+                    
+                    AdminMgmt --> AdminOps{Admin Operations}
+                    AdminOps -->|Add| AddAdmin[Add New Admin]
+                    AdminOps -->|Edit| EditAdmin[Edit Admin]
+                    AdminOps -->|Remove| RemoveAdmin[Remove Admin]
+                    AdminOps -->|Password| ChangePwd[Change Password]
+            </div>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram-title">4. API Flow Sequence (Accurate Endpoints)</div>
+            <div class="mermaid">
+                sequenceDiagram
+                    participant U as User
+                    participant F as Frontend
+                    participant B as Backend (Express)
+                    participant D as Database (Sequelize)
+                    participant E as Email Service
+                    
+                    U->>F: Browse Products
+                    F->>B: GET /api/products
+                    B->>D: Query Products
+                    D-->>B: Product Data
+                    B-->>F: Product List
+                    F-->>U: Display Products
+                    
+                    U->>F: Checkout (name, email, address, cart)
+                    F->>B: POST /api/orders (X-User-Language header)
+                    B->>D: Create Order (pending)
+                    B->>E: Send OTP Email
+                    Note over B,E: Language detection order:\n1) X-User-Language\n2) Accept-Language\n3) UserPreference DB
+                    D-->>B: Order Created
+                    B-->>F: { orderId, email }
+                    
+                    U->>F: Enter OTP Code
+                    F->>B: POST /api/orders/confirm { orderId, email, code }
+                    B->>D: Verify OTP + Update Order (confirmed)
+                    B->>E: Send Order Confirmation Email
+                    D-->>B: Update OK
+                    B-->>F: { message: success }
+                    F-->>U: Show Order Success
+                    
+                    U->>F: Resend OTP
+                    F->>B: POST /api/orders/resend-otp { orderId, email }
+                    B->>E: Resend OTP Email
+                    E-->>B: Sent
+                    B-->>F: { message: resent }
+            </div>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram-title">5. Multi-Language Support & Preference Flow</div>
+            <div class="mermaid">
+                flowchart LR
+                    subgraph "Frontend"
+                        A1[Language Switcher] -->|set| A2[localStorage userLanguage]
+                        A2 --> A3[Attach X-User-Language header]
+                        A1 -->|optional save| A4[POST /api/preferences/language]
+                        A5[On load] -->|fetch| A6[GET /api/preferences/language/:email]
+                    end
+                    
+                    subgraph "Backend Language Detection"
+                        B1[X-User-Language] --> B4[Selected Language]
+                        B2[Accept-Language] --> B4
+                        B3[UserPreference DB] --> B4
+                    end
+                    
+                    subgraph "Email Templates"
+                        C1[en templates]:::enstyle
+                        C2[my templates]:::mystyle
+                    end
+                    
+                    A3 --> B1
+                    A5 --> B3
+                    B4 -->|choose| C1
+                    B4 -->|choose| C2
+                    
+                    classDef enstyle fill:#dff0d8,stroke:#4CAF50,color:#333;
+                    classDef mystyle fill:#e8eaf6,stroke:#3f51b5,color:#333;
+            </div>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram-title">6. Data Models (Actual Fields)</div>
+            <div class="mermaid">
+                erDiagram
+                    PRODUCT {
+                        int id PK
+                        string name
+                        string sku
+                        float price
+                        float cost
+                        string description
+                        string image
+                        datetime createdAt
+                        datetime updatedAt
+                    }
+                    
+                    ORDER {
+                        int id PK
+                        string name
+                        string email
+                        string address
+                        json cart
+                        float totalPrice
+                        string purchaseOrderNumber
+                        boolean confirmed
+                        string status
+                        string language
+                        datetime createdAt
+                        datetime updatedAt
+                    }
+                    
+                    OTP {
+                        int id PK
+                        string email
+                        string code
+                        datetime expiresAt
+                        datetime createdAt
+                        datetime updatedAt
+                    }
+                    
+                    ADMIN_USER {
+                        int id PK
+                        string username
+                        string password
+                        datetime createdAt
+                        datetime updatedAt
+                    }
+                    
+                    USER_PREFERENCE {
+                        int id PK
+                        string email
+                        string language
+                        datetime createdAt
+                        datetime updatedAt
+                    }
+                    
+                    %% Note: ORDER.cart stores productId references in JSON
+                    ORDER ||..|| PRODUCT : "cart JSON references productId"
+                    USER_PREFERENCE ||--o{ ORDER : "influences language"
+            </div>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram-title">7. Security & Error Handling Flow</div>
+            <div class="mermaid">
+                flowchart TD
+                    Request[API Request] --> Auth{Authentication Required?}
+                    
+                    Auth -->|Yes (Admin)| Token[Validate JWT]
+                    Auth -->|No (Public)| Process[Process Request]
+                    
+                    Token --> Valid{Token Valid?}
+                    Valid -->|Yes| Process
+                    Valid -->|No| Unauthorized[401 Unauthorized]
+                    
+                    Process --> Execute[Execute Handler]
+                    Execute --> Response[Send Response]
+                    
+                    Response --> Done([Complete])
+            </div>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram-title">8. REST API Endpoints Map</div>
+            <div class="mermaid">
+                flowchart LR
+                    subgraph Products
+                        P1[GET /api/products]
+                        P2[POST /api/products]:::admin
+                        P3[PUT /api/products/:id]:::admin
+                        P4[DELETE /api/products/:id]:::admin
+                        U1[POST /api/upload]:::admin
+                    end
+                    
+                    subgraph Orders
+                        O1[POST /api/orders]
+                        O2[POST /api/orders/confirm]
+                        O3[POST /api/orders/resend-otp]
+                        O4[GET /api/orders]:::admin
+                        O5[PUT /api/orders/:id/status]:::admin
+                    end
+                    
+                    subgraph Admin
+                        A1[POST /api/admin/login]
+                        A2[POST /api/admin/change-password]:::auth
+                        AU[GET/POST/DELETE/PUT /api/admin/users...]:::auth
+                    end
+                    
+                    subgraph Preferences
+                        L1[POST /api/preferences/language]
+                        L2[GET /api/preferences/language/:email]
+                        L3[GET /api/test/language-detection]
+                    end
+                    
+                    classDef admin fill:#fff3cd,stroke:#f0ad4e,color:#333;
+                    classDef auth fill:#fdecea,stroke:#d9534f,color:#333;
+            </div>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram-title">9. File Upload Flow</div>
+            <div class="mermaid">
+                flowchart TD
+                    Admin[Admin User] --> Choose[Choose Image File]
+                    Choose --> POST[POST /api/upload]
+                    POST --> Validate{Validate Type/Size}
+                    Validate -->|OK| Store[Store to /public/uploads]
+                    Validate -->|Fail| Err[Return Error]
+                    Store --> Ref[Return file path]
+                    Ref --> Use[Attach image to product create/update]
+            </div>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            },
+            sequence: {
+                useMaxWidth: true,
+                diagramMarginX: 50,
+                diagramMarginY: 10
+            },
+            er: {
+                useMaxWidth: true,
+                diagramPadding: 20
+            }
+        });
+    </script>
+</body>
+</html> 
