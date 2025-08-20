@@ -1,29 +1,29 @@
 const emailTemplates = {
     otp: {
-        subject: 'Your Rice Shop OTP',
+        subject: 'Your Nan Ayeyar OTP',
         text: (code) => `Your OTP is: ${code}`,
         html: (code) => `
             <div style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; padding: 24px; background: #fafcff;">
-                <h2 style="color: #2d7a2d;">Rice Shop OTP</h2>
+                <h2 style="color: #2d7a2d;">Nan Ayeyar OTP</h2>
                 <p>Dear Customer,</p>
                 <p>Your One-Time Password (OTP) is:</p>
                 <div style="font-size: 2em; font-weight: bold; letter-spacing: 6px; color: #2d7a2d; margin: 16px 0;">${code}</div>
                 <p>This code is valid for 10 minutes. Please do not share it with anyone.</p>
-                <p style="margin-top: 32px; color: #888; font-size: 0.9em;">Rice Shop Team</p>
+                <p style="margin-top: 32px; color: #888; font-size: 0.9em;">Nan Ayeyar Team</p>
             </div>
         `
     },
     otpResent: {
-        subject: 'Your Rice Shop OTP (Resent)',
+        subject: 'Your Nan Ayeyar OTP (Resent)',
         text: (code) => `Your new OTP is: ${code}`,
         html: (code) => `
             <div style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; padding: 24px; background: #fafcff;">
-                <h2 style="color: #2d7a2d;">Rice Shop OTP (Resent)</h2>
+                <h2 style="color: #2d7a2d;">Nan Ayeyar OTP (Resent)</h2>
                 <p>Dear Customer,</p>
                 <p>Your new One-Time Password (OTP) is:</p>
                 <div style="font-size: 2em; font-weight: bold; letter-spacing: 6px; color: #2d7a2d; margin: 16px 0;">${code}</div>
                 <p>This code is valid for 10 minutes. Please do not share it with anyone.</p>
-                <p style="margin-top: 32px; color: #888; font-size: 0.9em;">Rice Shop Team</p>
+                <p style="margin-top: 32px; color: #888; font-size: 0.9em;">Nan Ayeyar Team</p>
             </div>
         `
     },
@@ -57,7 +57,7 @@ const emailTemplates = {
                     </tfoot>
                 </table>
                 <p>We appreciate your business. You will receive another email when your order is delivered.</p>
-                <p style="margin-top: 32px; color: #888; font-size: 0.9em;">Rice Shop Team</p>
+                <p style="margin-top: 32px; color: #888; font-size: 0.9em;">Nan Ayeyar Team</p>
             </div>
         `
     },
@@ -85,9 +85,9 @@ const emailTemplates = {
                         ${orderDetailsHtml}
                     </tbody>
                 </table>
-                <p>Thank you for choosing Rice Shop! We hope you enjoy your rice.</p>
+                <p>Thank you for choosing Nan Ayeyar! We hope you enjoy your rice.</p>
                 <p>If you have any questions or concerns, please don't hesitate to contact us.</p>
-                <p style="margin-top: 32px; color: #888; font-size: 0.9em;">Rice Shop Team</p>
+                <p style="margin-top: 32px; color: #888; font-size: 0.9em;">Nan Ayeyar Team</p>
             </div>
         `
     },
@@ -120,7 +120,7 @@ const emailTemplates = {
                         </tr>
                     </tfoot>
                 </table>
-                <div style="color:#888; font-size:0.95em;">Order placed via Rice Shop</div>
+                <div style="color:#888; font-size:0.95em;">Order placed via Nan Ayeyar</div>
             </div>
         `
     }

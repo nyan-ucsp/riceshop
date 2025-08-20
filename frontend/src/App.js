@@ -9,6 +9,7 @@ import OTPConfirmation from './OTPConfirmation';
 import OrderSuccess from './OrderSuccess';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import LanguageTest from './components/LanguageTest';
+import Contact from './Contact';
 import logo from './logo192.jfif';
 import './i18n';
 
@@ -24,9 +25,11 @@ function App() {
       <Router>
         <nav className="navbar">
           <Link to="/" className="logo-link">
-            <img src={logo} alt="Rice Shop Logo" className="logo" />
+            <img src={logo} alt="Nan Ayeyar Logo" className="logo" />
+            <span className="shop-name">Nan Ayeyar</span>
           </Link>
           <div className="nav-links">
+            <Link to="/contact" className="contact-link">{t('navigation.contact')}</Link>
             <LanguageSwitcher />
             <Link to="/cart" className="cart-link">
               <span className="cart-icon">🛒</span>
@@ -44,6 +47,7 @@ function App() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/otp" element={<OTPConfirmation />} />
           <Route path="/success" element={<OrderSuccess />} />
+          <Route path="/contact" element={<Contact />} />
           <Route path="/test" element={<LanguageTest />} />
         </Routes>
       </Router>

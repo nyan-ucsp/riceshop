@@ -27,7 +27,8 @@
     "home": "Home",
     "products": "Products",
     "cart": "Cart",
-    "orders": "Orders"
+    "orders": "Orders",
+    "contact": "Contact"
   },
   "product": {
     "description": "Description",
@@ -55,7 +56,7 @@
     "shippingInformation": "Shipping Information",
     "paymentMethod": "Payment Method",
     "orderSummary": "Order Summary",
-    "firstName": "First Name",
+    "firstName": "Name",
     "lastName": "Last Name",
     "email": "Email",
     "phone": "Phone",
@@ -106,5 +107,17 @@
     "placingOrder": "Placing Order...",
     "verifying": "Verifying...",
     "sending": "Sending..."
+  }
+  ,
+  "contact": {
+    "title": "Contact Us",
+    "description": "We'd love to hear from you. Reach us via phone or email, or visit us at our store.",
+    "phoneLabel": "Phone",
+    "emailLabel": "Email",
+    "addressLabel": "Address",
+    "viewOnMap": "View on Google Maps",
+    "phoneValue": "+95 9 123 456 789",
+    "emailValue": "info@riceshop.com",
+    "addressValue": "123 Rice Street, Yangon, Myanmar"
   }
 }

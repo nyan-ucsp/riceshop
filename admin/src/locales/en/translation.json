@@ -35,7 +35,7 @@
     "adminLogin": "Admin Login",
     "loginFailed": "Login failed",
     "changePassword": "Change Password",
-    "oldPassword": "Old Password",
+    "oldPassword": "Current Password",
     "newPassword": "New Password",
     "passwordChanged": "Password changed successfully!",
     "changePasswordFailed": "Change password failed",

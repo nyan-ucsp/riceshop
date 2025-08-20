@@ -1,29 +1,29 @@
 const emailTemplates = {
     otp: {
-        subject: 'သင့်ဆန်ဆိုင် OTP',
+        subject: 'သင့် Nan Ayeyar OTP',
         text: (code) => `သင့် OTP မှာ: ${code}`,
         html: (code) => `
             <div style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; padding: 24px; background: #fafcff;">
-                <h2 style="color: #2d7a2d;">ဆန်ဆိုင် OTP</h2>
+                <h2 style="color: #2d7a2d;">Nan Ayeyar OTP</h2>
                 <p>အမြတ်တနိုးရှိသော ဝယ်ယူသူ၊</p>
                 <p>သင့်တစ်ကြိမ်သုံး စကားဝှက် (OTP) မှာ:</p>
                 <div style="font-size: 2em; font-weight: bold; letter-spacing: 6px; color: #2d7a2d; margin: 16px 0;">${code}</div>
                 <p>ဤကုဒ်သည် မိနစ် ၁၀ အတွင်း မှန်ကန်သည်။ ကျေးဇူးပြု၍ မည်သူနှင့်မျှ မမျှဝေပါနှင့်။</p>
-                <p style="margin-top: 32px; color: #888; font-size: 0.9em;">ဆန်ဆိုင် အဖွဲ့</p>
+                <p style="margin-top: 32px; color: #888; font-size: 0.9em;">Nan Ayeyar အဖွဲ့</p>
             </div>
         `
     },
     otpResent: {
-        subject: 'သင့်ဆန်ဆိုင် OTP (ပြန်ပို့ထားသည်)',
+        subject: 'သင့် Nan Ayeyar OTP (ပြန်ပို့ထားသည်)',
         text: (code) => `သင့် OTP အသစ်မှာ: ${code}`,
         html: (code) => `
             <div style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; padding: 24px; background: #fafcff;">
-                <h2 style="color: #2d7a2d;">ဆန်ဆိုင် OTP (ပြန်ပို့ထားသည်)</h2>
+                <h2 style="color: #2d7a2d;">Nan Ayeyar OTP (ပြန်ပို့ထားသည်)</h2>
                 <p>အမြတ်တနိုးရှိသော ဝယ်ယူသူ၊</p>
                 <p>သင့်တစ်ကြိမ်သုံး စကားဝှက် (OTP) အသစ်မှာ:</p>
                 <div style="font-size: 2em; font-weight: bold; letter-spacing: 6px; color: #2d7a2d; margin: 16px 0;">${code}</div>
                 <p>ဤကုဒ်သည် မိနစ် ၁၀ အတွင်း မှန်ကန်သည်။ ကျေးဇူးပြု၍ မည်သူနှင့်မျှ မမျှဝေပါနှင့်။</p>
-                <p style="margin-top: 32px; color: #888; font-size: 0.9em;">ဆန်ဆိုင် အဖွဲ့</p>
+                <p style="margin-top: 32px; color: #888; font-size: 0.9em;">Nan Ayeyar အဖွဲ့</p>
             </div>
         `
     },
@@ -57,7 +57,7 @@ const emailTemplates = {
                     </tfoot>
                 </table>
                 <p>သင့်စီးပွားရေးကို ကျေးဇူးတင်ပါတယ်။ သင့်အော်ဒါကို ပို့ဆောင်ပြီးသောအခါ အီးမေးလ်တစ်စောင် ထပ်ရရှိပါမည်။</p>
-                <p style="margin-top: 32px; color: #888; font-size: 0.9em;">ဆန်ဆိုင် အဖွဲ့</p>
+                <p style="margin-top: 32px; color: #888; font-size: 0.9em;">Nan Ayeyar အဖွဲ့</p>
             </div>
         `
     },
@@ -85,9 +85,9 @@ const emailTemplates = {
                         ${orderDetailsHtml}
                     </tbody>
                 </table>
-                <p>ဆန်ဆိုင် ရွေးချယ်ပေးတဲ့အတွက် ကျေးဇူးတင်ပါတယ်! သင့်ဆန်ကို နှစ်သက်မယ်လို့ မျှော်လင့်ပါတယ်။</p>
+                <p>Nan Ayeyar ရွေးချယ်ပေးတဲ့အတွက် ကျေးဇူးတင်ပါတယ်! သင့်ဆန်ကို နှစ်သက်မယ်လို့ မျှော်လင့်ပါတယ်။</p>
                 <p>မေးခွန်းများ သို့မဟုတ် စိုးရိမ်မှုများ ရှိပါက ကျွန်ုပ်တို့ကို ဆက်သွယ်ရန် မတွန့်ဆုတ်ပါနှင့်။</p>
-                <p style="margin-top: 32px; color: #888; font-size: 0.9em;">ဆန်ဆိုင် အဖွဲ့</p>
+                <p style="margin-top: 32px; color: #888; font-size: 0.9em;">Nan Ayeyar အဖွဲ့</p>
             </div>
         `
     },
@@ -120,7 +120,7 @@ const emailTemplates = {
                         </tr>
                     </tfoot>
                 </table>
-                <div style="color:#888; font-size:0.95em;">ဆန်ဆိုင်မှ အော်ဒါတင်ထားပါသည်</div>
+                <div style="color:#888; font-size:0.95em;">Nan Ayeyar မှ အော်ဒါတင်ထားပါသည်</div>
             </div>
         `
     }

@@ -60,7 +60,7 @@ router.post('/admin/change-password', requireAdminAuth, async (req, res) => {
     }
     const valid = await bcrypt.compare(oldPassword, user.password);
     if (!valid) {
-        return res.status(401).json({ error: 'Old password incorrect' });
+        return res.status(401).json({ error: 'Current password incorrect' });
     }
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
