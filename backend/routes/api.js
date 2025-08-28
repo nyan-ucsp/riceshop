@@ -1,16 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const Product = require('../models/Product');
-const Order = require('../models/Order');
-const Otp = require('../models/Otp');
+const { Product, Order, Otp, AdminUser, UserPreference } = require('../models/index');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const AdminUser = require('../models/AdminUser');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const emailService = require('../services/emailService');
-const UserPreference = require('../models/UserPreference');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 

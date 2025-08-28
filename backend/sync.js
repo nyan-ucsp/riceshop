@@ -1,5 +1,4 @@
-const sequelize = require('./models/index');
-const AdminUser = require('./models/AdminUser');
+const { sequelize, AdminUser } = require('./models/index');
 const bcrypt = require('bcryptjs');
 
 async function syncDatabase() {

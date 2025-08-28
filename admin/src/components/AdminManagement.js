@@ -26,9 +26,20 @@ function AdminManagement() {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const data = await res.json();
-            setAdmins(data);
+            
+            // Check if the response is an array
+            if (Array.isArray(data)) {
+                setAdmins(data);
+            } else if (data.error) {
+                setError(data.error);
+                setAdmins([]);
+            } else {
+                setError('Invalid response format');
+                setAdmins([]);
+            }
         } catch (e) {
             setError('Failed to load admins');
+            setAdmins([]);
         }
         setLoading(false);
     };
@@ -88,12 +99,12 @@ function AdminManagement() {
     };
 
     const canDelete = (admin) => {
-        if (admins.length <= 1) return false;
+        if (!Array.isArray(admins) || admins.length <= 1) return false;
         if (admin.username === username) return false;
         return true;
     };
 
-    const filteredAdmins = admins.filter(a => a.username.toLowerCase().includes(search.toLowerCase()));
+    const filteredAdmins = Array.isArray(admins) ? admins.filter(a => a.username.toLowerCase().includes(search.toLowerCase())) : [];
 
     const handleEdit = async (e) => {
         e.preventDefault();
