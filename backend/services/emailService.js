@@ -21,7 +21,7 @@ function formatMMK(amount) {
 // Helper: Detect language from email or use default
 async function detectLanguage(email, defaultLang = 'en') {
     try {
-        const UserPreference = require('../models/UserPreference');
+        const { UserPreference } = require('../models/index');
         const preference = await UserPreference.findOne({ where: { email } });
         
         if (preference) {
@@ -189,7 +189,7 @@ async function sendDeliveryNotificationEmail(order, orderDetailsHtml) {
 
 // Generate order details HTML for email
 async function generateOrderDetailsHtml(order, language = 'en') {
-    const Product = require('../models/Product');
+    const { Product } = require('../models/index');
     let orderDetailsHtml = '';
     
     for (const item of order.cart) {

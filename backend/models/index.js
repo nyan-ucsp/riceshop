@@ -39,7 +39,9 @@ const Otp = sequelize.define('Otp', {
 
 const Product = sequelize.define('Product', {
     name: { type: Sequelize.DataTypes.STRING, allowNull: false },
+    sku: { type: Sequelize.DataTypes.STRING, allowNull: false, unique: true },
     price: { type: Sequelize.DataTypes.FLOAT, allowNull: false },
+    cost: { type: Sequelize.DataTypes.FLOAT, allowNull: false, defaultValue: 0 },
     description: { type: Sequelize.DataTypes.TEXT },
     image: { type: Sequelize.DataTypes.STRING },
     category: { type: Sequelize.DataTypes.STRING },
