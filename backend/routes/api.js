@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Product, Order, Otp, AdminUser, UserPreference } = require('../models/index');
+const { safeDbOperation } = require('../middleware/dbErrorHandler');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -28,20 +29,30 @@ function requireAdminAuth(req, res, next) {
 
 // POST /api/admin/login
 router.post('/admin/login', async (req, res) => {
-    const { username, password } = req.body;
-    if (!username || !password) {
-        return res.status(400).json({ error: 'Username and password required' });
+    try {
+        const { username, password } = req.body;
+        if (!username || !password) {
+            return res.status(400).json({ error: 'Username and password required' });
+        }
+        
+        const user = await safeDbOperation(
+            () => AdminUser.findOne({ where: { username } }),
+            'Failed to authenticate admin user'
+        );
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+        
+        const valid = await bcrypt.compare(password, user.password);
+        if (!valid) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+        
+        const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '12h' });
+        res.json({ token, username: user.username });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-    const user = await AdminUser.findOne({ where: { username } });
-    if (!user) {
-        return res.status(401).json({ error: 'Invalid credentials' });
-    }
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) {
-        return res.status(401).json({ error: 'Invalid credentials' });
-    }
-    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '12h' });
-    res.json({ token, username: user.username });
 });
 
 // POST /api/admin/change-password
@@ -108,84 +119,124 @@ function generatePurchaseOrderNumber() {
 
 // GET /api/products - List all products
 router.get('/products', async (req, res) => {
-    const products = await Product.findAll();
-    res.json(products);
+    try {
+        const products = await safeDbOperation(
+            () => Product.findAll(),
+            'Failed to fetch products'
+        );
+        res.json(products);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // POST /api/orders - Create order, send OTP
 router.post('/orders', async (req, res) => {
-    const { name, email, address, cart, language } = req.body;
-    if (!name || !email || !address || !cart) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    // Calculate total price
-    let totalPrice = 0;
-    for (const item of cart) {
-        const product = await Product.findByPk(item.productId);
-        if (product) {
-            totalPrice += product.price * item.quantity;
+    try {
+        const { name, email, address, cart, language } = req.body;
+        if (!name || !email || !address || !cart) {
+            return res.status(400).json({ error: 'Missing required fields' });
         }
+
+        // Calculate total price
+        let totalPrice = 0;
+        for (const item of cart) {
+            const product = await safeDbOperation(
+                () => Product.findByPk(item.productId),
+                'Failed to fetch product for price calculation'
+            );
+            if (product) {
+                totalPrice += product.price * item.quantity;
+            }
+        }
+
+        // Generate purchase order number
+        const purchaseOrderNumber = generatePurchaseOrderNumber();
+
+        // Create order (not confirmed yet)
+        const order = await safeDbOperation(
+            () => Order.create({
+                name,
+                email,
+                address,
+                cart,
+                totalPrice,
+                purchaseOrderNumber,
+                confirmed: false,
+                language: language || 'en' // Default to English if not specified
+            }),
+            'Failed to create order'
+        );
+
+        // Generate OTP
+        const code = emailService.generateOtp();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min expiry
+        await safeDbOperation(
+            () => Otp.create({ email, code, expiresAt }),
+            'Failed to create OTP'
+        );
+
+        // Send OTP email with language support
+        await emailService.sendOtpEmail(email, code, false, req);
+        res.json({ orderId: order.id, message: 'OTP sent to email' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-
-    // Generate purchase order number
-    const purchaseOrderNumber = generatePurchaseOrderNumber();
-
-    // Create order (not confirmed yet)
-    const order = await Order.create({
-        name,
-        email,
-        address,
-        cart,
-        totalPrice,
-        purchaseOrderNumber,
-        confirmed: false,
-        language: language || 'en' // Default to English if not specified
-    });
-
-    // Generate OTP
-    const code = emailService.generateOtp();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min expiry
-    await Otp.create({ email, code, expiresAt });
-
-    // Send OTP email with language support
-    await emailService.sendOtpEmail(email, code, false, req);
-    res.json({ orderId: order.id, message: 'OTP sent to email' });
 });
 
 // POST /api/orders/confirm - Confirm OTP, finalize order
 router.post('/orders/confirm', async (req, res) => {
-    const { orderId, email, code } = req.body;
-    if (!orderId || !email || !code) {
-        return res.status(400).json({ error: 'Missing required fields' });
+    try {
+        const { orderId, email, code } = req.body;
+        if (!orderId || !email || !code) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+        
+        // Find OTP
+        const otp = await safeDbOperation(
+            () => Otp.findOne({ where: { email, code } }),
+            'Failed to verify OTP'
+        );
+        if (!otp || otp.expiresAt < new Date()) {
+            return res.status(400).json({ error: 'Invalid or expired OTP' });
+        }
+        
+        // Confirm order
+        const order = await safeDbOperation(
+            () => Order.findByPk(orderId),
+            'Failed to find order'
+        );
+        if (!order || order.email !== email) {
+            return res.status(400).json({ error: 'Order not found' });
+        }
+        
+        order.confirmed = true;
+        order.status = 'confirmed';
+        await safeDbOperation(
+            () => order.save(),
+            'Failed to confirm order'
+        );
+        
+        // Delete OTP
+        await safeDbOperation(
+            () => otp.destroy(),
+            'Failed to clean up OTP'
+        );
+
+        // Generate order details for customer email with stored language
+        const orderDetailsHtml = await emailService.generateOrderDetailsHtml(order, order.language);
+
+        // Send confirmation email to customer with stored language
+        await emailService.sendOrderConfirmationEmail(order, orderDetailsHtml, req);
+
+        // Send notification email to shop owner
+        const total = order.totalPrice;
+        await emailService.sendAdminNotificationEmail(order, orderDetailsHtml, total);
+
+        res.json({ message: 'Order confirmed and email sent' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-    // Find OTP
-    const otp = await Otp.findOne({ where: { email, code } });
-    if (!otp || otp.expiresAt < new Date()) {
-        return res.status(400).json({ error: 'Invalid or expired OTP' });
-    }
-    // Confirm order
-    const order = await Order.findByPk(orderId);
-    if (!order || order.email !== email) {
-        return res.status(400).json({ error: 'Order not found' });
-    }
-    order.confirmed = true;
-    order.status = 'confirmed';
-    await order.save();
-    // Delete OTP
-    await otp.destroy();
-
-    // Generate order details for customer email with stored language
-    const orderDetailsHtml = await emailService.generateOrderDetailsHtml(order, order.language);
-
-    // Send confirmation email to customer with stored language
-    await emailService.sendOrderConfirmationEmail(order, orderDetailsHtml, req);
-
-    // Send notification email to shop owner
-    const total = order.totalPrice;
-    await emailService.sendAdminNotificationEmail(order, orderDetailsHtml, total);
-
-    res.json({ message: 'Order confirmed and email sent' });
 });
 
 // POST /api/orders/resend-otp - Resend OTP to customer
@@ -394,84 +445,144 @@ router.get('/analytics/monthly', async (req, res) => {
 // --- Admin Management Endpoints ---
 // GET /api/admin/users - List all admin users
 router.get('/admin/users', requireAdminAuth, async (req, res) => {
-    const admins = await AdminUser.findAll({ attributes: ['id', 'username', 'createdAt', 'updatedAt'] });
-    res.json(admins);
+    try {
+        const admins = await safeDbOperation(
+            () => AdminUser.findAll({ attributes: ['id', 'username', 'createdAt', 'updatedAt'] }),
+            'Failed to fetch admin users'
+        );
+        res.json(admins);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // POST /api/admin/users - Add a new admin user
 router.post('/admin/users', requireAdminAuth, async (req, res) => {
-    const { username, password } = req.body;
-    if (!username || !password) {
-        return res.status(400).json({ error: 'Username and password required' });
+    try {
+        const { username, password } = req.body;
+        if (!username || !password) {
+            return res.status(400).json({ error: 'Username and password required' });
+        }
+        
+        const existing = await safeDbOperation(
+            () => AdminUser.findOne({ where: { username } }),
+            'Failed to check existing admin'
+        );
+        if (existing) {
+            return res.status(400).json({ error: 'Username already exists' });
+        }
+        
+        const hashed = await bcrypt.hash(password, 10);
+        const newAdmin = await safeDbOperation(
+            () => AdminUser.create({ username, password: hashed }),
+            'Failed to create admin user'
+        );
+        res.json({ id: newAdmin.id, username: newAdmin.username });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-    const existing = await AdminUser.findOne({ where: { username } });
-    if (existing) {
-        return res.status(400).json({ error: 'Username already exists' });
-    }
-    const hashed = await bcrypt.hash(password, 10);
-    const newAdmin = await AdminUser.create({ username, password: hashed });
-    res.json({ id: newAdmin.id, username: newAdmin.username });
 });
 
 // DELETE /api/admin/users/:id - Remove an admin user
 router.delete('/admin/users/:id', requireAdminAuth, async (req, res) => {
-    const { id } = req.params;
-    const adminToDelete = await AdminUser.findByPk(id);
-    if (!adminToDelete) {
-        return res.status(404).json({ error: 'Admin not found' });
+    try {
+        const { id } = req.params;
+        const adminToDelete = await safeDbOperation(
+            () => AdminUser.findByPk(id),
+            'Failed to find admin user'
+        );
+        if (!adminToDelete) {
+            return res.status(404).json({ error: 'Admin not found' });
+        }
+        // Prevent self-deletion
+        if (adminToDelete.id === req.admin.id) {
+            return res.status(400).json({ error: 'You cannot delete your own account.' });
+        }
+        // Prevent deletion if only one admin remains
+        const adminCount = await safeDbOperation(
+            () => AdminUser.count(),
+            'Failed to count admin users'
+        );
+        if (adminCount <= 1) {
+            return res.status(400).json({ error: 'Cannot delete the last remaining admin.' });
+        }
+        await safeDbOperation(
+            () => adminToDelete.destroy(),
+            'Failed to delete admin user'
+        );
+        res.json({ message: 'Admin deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-    // Prevent self-deletion
-    if (adminToDelete.id === req.admin.id) {
-        return res.status(400).json({ error: 'You cannot delete your own account.' });
-    }
-    // Prevent deletion if only one admin remains
-    const adminCount = await AdminUser.count();
-    if (adminCount <= 1) {
-        return res.status(400).json({ error: 'Cannot delete the last remaining admin.' });
-    }
-    await adminToDelete.destroy();
-    res.json({ message: 'Admin deleted successfully' });
 });
 
 // PUT /api/admin/users/:id/username - Update admin username
 router.put('/admin/users/:id/username', requireAdminAuth, async (req, res) => {
-    const { id } = req.params;
-    const { username } = req.body;
-    if (!username) {
-        return res.status(400).json({ error: 'Username required' });
+    try {
+        const { id } = req.params;
+        const { username } = req.body;
+        if (!username) {
+            return res.status(400).json({ error: 'Username required' });
+        }
+        
+        const admin = await safeDbOperation(
+            () => AdminUser.findByPk(id),
+            'Failed to find admin user'
+        );
+        if (!admin) {
+            return res.status(404).json({ error: 'Admin not found' });
+        }
+        
+        // Prevent duplicate username
+        const existing = await safeDbOperation(
+            () => AdminUser.findOne({ where: { username } }),
+            'Failed to check existing username'
+        );
+        if (existing && existing.id !== admin.id) {
+            return res.status(400).json({ error: 'Username already exists' });
+        }
+        
+        admin.username = username;
+        await safeDbOperation(
+            () => admin.save(),
+            'Failed to update username'
+        );
+        res.json({ message: 'Username updated', username: admin.username });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-    const admin = await AdminUser.findByPk(id);
-    if (!admin) {
-        return res.status(404).json({ error: 'Admin not found' });
-    }
-    // Prevent duplicate username
-    const existing = await AdminUser.findOne({ where: { username } });
-    if (existing && existing.id !== admin.id) {
-        return res.status(400).json({ error: 'Username already exists' });
-    }
-    admin.username = username;
-    await admin.save();
-    res.json({ message: 'Username updated', username: admin.username });
 });
 
 // PUT /api/admin/users/:id/password - Reset admin password
 router.put('/admin/users/:id/password', requireAdminAuth, async (req, res) => {
-    const { id } = req.params;
-    const { password } = req.body;
-    if (!password) {
-        return res.status(400).json({ error: 'Password required' });
+    try {
+        const { id } = req.params;
+        const { password } = req.body;
+        if (!password) {
+            return res.status(400).json({ error: 'Password required' });
+        }
+        // Prevent self-reset
+        if (parseInt(id) === req.admin.id) {
+            return res.status(400).json({ error: 'You cannot reset your own password here.' });
+        }
+        
+        const admin = await safeDbOperation(
+            () => AdminUser.findByPk(id),
+            'Failed to find admin user'
+        );
+        if (!admin) {
+            return res.status(404).json({ error: 'Admin not found' });
+        }
+        
+        admin.password = await bcrypt.hash(password, 10);
+        await safeDbOperation(
+            () => admin.save(),
+            'Failed to reset password'
+        );
+        res.json({ message: 'Password reset successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-    // Prevent self-reset
-    if (parseInt(id) === req.admin.id) {
-        return res.status(400).json({ error: 'You cannot reset your own password here.' });
-    }
-    const admin = await AdminUser.findByPk(id);
-    if (!admin) {
-        return res.status(404).json({ error: 'Admin not found' });
-    }
-    admin.password = await bcrypt.hash(password, 10);
-    await admin.save();
-    res.json({ message: 'Password reset successfully' });
 });
 
 // All admin routes below require authentication

@@ -10,8 +10,53 @@ const sequelize = new Sequelize(
         port: process.env.DB_PORT,
         dialect: 'postgres',
         logging: false,
+        retry: {
+            match: [
+                /ETIMEDOUT/,
+                /EHOSTUNREACH/,
+                /ECONNRESET/,
+                /ECONNREFUSED/,
+                /ETIMEDOUT/,
+                /ESOCKETTIMEDOUT/,
+                /EHOSTUNREACH/,
+                /EPIPE/,
+                /EAI_AGAIN/,
+                /SequelizeConnectionError/,
+                /SequelizeConnectionRefusedError/,
+                /SequelizeHostNotFoundError/,
+                /SequelizeHostNotReachableError/,
+                /SequelizeInvalidConnectionError/,
+                /SequelizeConnectionTimedOutError/
+            ],
+            max: 3
+        },
+        pool: {
+            max: 5,
+            min: 0,
+            acquire: 30000,
+            idle: 10000
+        },
+        dialectOptions: {
+            connectTimeout: 10000,
+            requestTimeout: 30000
+        }
     }
 );
+
+// Test database connection
+async function testConnection() {
+    try {
+        await sequelize.authenticate();
+        console.log('Database connection has been established successfully.');
+        return true;
+    } catch (error) {
+        console.error('Unable to connect to the database:', error.message);
+        return false;
+    }
+}
+
+// Initialize connection test
+testConnection();
 
 // Define all models
 const AdminUser = sequelize.define('AdminUser', {

@@ -1,3 +1,6 @@
+// Load error handlers first
+require('./errorHandler');
+
 const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
@@ -7,6 +10,7 @@ const cors = require('cors');
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 const apiRouter = require('./routes/api');
+const { handleDatabaseError } = require('./middleware/dbErrorHandler');
 
 const app = express();
 
@@ -21,6 +25,20 @@ app.get('/favicon.ico', (req, res) => {
     res.status(204).end();
 });
 
+// Health check endpoint
+app.get('/health', async (req, res) => {
+    const { checkDatabaseHealth } = require('./middleware/dbErrorHandler');
+    const dbHealth = await checkDatabaseHealth();
+    
+    const status = dbHealth.status === 'healthy' ? 200 : 503;
+    res.status(status).json({
+        status: dbHealth.status === 'healthy' ? 'ok' : 'error',
+        timestamp: new Date().toISOString(),
+        database: dbHealth,
+        uptime: process.uptime()
+    });
+});
+
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
@@ -33,6 +51,9 @@ app.use('/api', apiRouter);
 app.use(function (req, res, next) {
     res.status(404).json({ error: 'Not Found' });
 });
+
+// Database error handler (must be before general error handler)
+app.use(handleDatabaseError);
 
 // error handler
 app.use(function (err, req, res, next) {

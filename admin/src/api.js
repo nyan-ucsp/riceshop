@@ -1,4 +1,4 @@
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000/api';
+const API_BASE = process.env.REACT_APP_API_BASE || '/api';
 
 function getAuthHeaders() {
     const token = localStorage.getItem('admin_token');
@@ -125,14 +125,14 @@ export async function getMonthlyStats() {
 }
 
 export async function getAdminUsers(token) {
-    const res = await fetch('/api/admin/users', {
+    const res = await fetch(`${API_BASE}/admin/users`, {
         headers: { Authorization: `Bearer ${token}` },
     });
     return res.json();
 }
 
 export async function addAdminUser(token, username, password) {
-    const res = await fetch('/api/admin/users', {
+    const res = await fetch(`${API_BASE}/admin/users`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -144,7 +144,7 @@ export async function addAdminUser(token, username, password) {
 }
 
 export async function deleteAdminUser(token, id) {
-    const res = await fetch(`/api/admin/users/${id}`, {
+    const res = await fetch(`${API_BASE}/admin/users/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
     });
@@ -152,7 +152,7 @@ export async function deleteAdminUser(token, id) {
 }
 
 export async function updateAdminUsername(token, id, username) {
-    const res = await fetch(`/api/admin/users/${id}/username`, {
+    const res = await fetch(`${API_BASE}/admin/users/${id}/username`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -164,7 +164,7 @@ export async function updateAdminUsername(token, id, username) {
 }
 
 export async function resetAdminPassword(token, id, password) {
-    const res = await fetch(`/api/admin/users/${id}/password`, {
+    const res = await fetch(`${API_BASE}/admin/users/${id}/password`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
