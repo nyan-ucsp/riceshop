@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
   backend:
     build: ./backend
     ports:
-      - "3000:3000"
+      - "3003:3000"
     environment:
       - NODE_ENV=production
       - DB_HOST=postgres
